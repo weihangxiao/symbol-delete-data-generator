@@ -187,9 +187,6 @@ class SymbolDeleteGenerator(BaseGenerator):
                                  shift_frames: int = 10) -> List[Image.Image]:
         """Create animation frames for symbol deletion."""
         frames = []
-        width, height = self.config.image_size
-        symbol_size = self.config.symbol_size
-        spacing = symbol_size + 20
 
         # Show initial sequence
         frames.extend([self._render_sequence(initial_seq, color_map)] * hold_frames)
@@ -271,12 +268,9 @@ class SymbolDeleteGenerator(BaseGenerator):
         spacing = symbol_size + 20
         center_y = height // 2
 
-        # Calculate layouts
+        # Calculate initial layout (keep this consistent, don't re-center)
         initial_total_width = len(initial_seq) * spacing - 20
-        initial_start_x = (width - initial_total_width) // 2
-
-        final_total_width = (len(initial_seq) - 1) * spacing - 20
-        final_start_x = (width - final_total_width) // 2
+        start_x = (width - initial_total_width) // 2
 
         # Create image
         img = Image.new('RGB', (width, height), self.bg_color)
@@ -292,14 +286,12 @@ class SymbolDeleteGenerator(BaseGenerator):
                 continue  # Skip the deleted symbol
 
             if i < delete_pos:
-                # Symbols before deletion: shift from initial to final layout
-                initial_x = initial_start_x + i * spacing
-                final_x = final_start_x + i * spacing
-                current_x = initial_x + (final_x - initial_x) * progress
+                # Symbols before deletion: stay in original position (no movement)
+                current_x = start_x + i * spacing
             else:
-                # Symbols after deletion: shift left to close gap
-                initial_x = initial_start_x + i * spacing
-                final_x = final_start_x + (i - 1) * spacing  # i-1 because one symbol removed
+                # Symbols after deletion: shift left by one spacing unit to close gap
+                initial_x = start_x + i * spacing
+                final_x = start_x + (i - 1) * spacing  # Shift left by one position
                 current_x = initial_x + (final_x - initial_x) * progress
 
             self._draw_symbol(draw, symbol, int(current_x), center_y,
